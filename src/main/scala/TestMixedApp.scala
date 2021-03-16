@@ -5,10 +5,6 @@ import zio._
 import zio.blocking._
 import zio.interop.catz._
 
-import java.time.format.DateTimeFormatter
-
-
-
 object runIO {
   def apply[E, A](io: ZIO[ZEnv, E, A]): A = {
     zio.Runtime.global.unsafeRun(io)
@@ -37,21 +33,13 @@ object Base {
 }
 
 object Example {
-  //log
-  def log(msg: String) = {
-    for {
-      t <- ZIO.accessM[zio.clock.Clock](_.get.localDateTime).map(_.format(DateTimeFormatter.ISO_DATE_TIME))
-      _ <- ZIO.accessM[Blocking](_.get.effectBlocking(println(s"[${t}] ${msg}")))
-    } yield ()
-  }
-
   val prog = for {
     concurrent <- ZIO.foreachParN(20)(List.range(0, 100)){ i =>
                     for {
                       r <- zio.random.nextInt
-                      _ <- log(s"${i}: starting")
+                      _ <- Log(s"${i}: starting")
                       _ <- Base.queryString(sql"select nodeid from nodeconfigurations, pg_sleep(${r%5})")
-                      _ <- log(s"${i}: done")
+                      _ <- Log(s"${i}: done")
                     } yield i.toString
                   }
   } yield {

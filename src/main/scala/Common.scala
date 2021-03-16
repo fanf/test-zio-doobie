@@ -1,7 +1,10 @@
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import zio.ZIO
+import zio.blocking.Blocking
 
 import java.io.Closeable
+import java.time.format.DateTimeFormatter
 import javax.sql.DataSource
 
 object DatasourceGen {
@@ -43,5 +46,15 @@ object DatasourceGen {
         throw e
     }
     datasource
+  }
+}
+
+object Log {
+  //log
+  def apply(msg: String) = {
+    (for {
+      t <- ZIO.accessM[zio.clock.Clock](_.get.localDateTime).map(_.format(DateTimeFormatter.ISO_DATE_TIME))
+      _ <- ZIO.accessM[Blocking](_.get.effectBlocking(println(s"[${t}] ${msg}")))
+    } yield ()).catchAll(ex => throw ex) // if clock and console fails, kill everything
   }
 }

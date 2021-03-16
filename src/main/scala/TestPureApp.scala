@@ -5,9 +5,6 @@ import zio._
 import zio.blocking._
 import zio.interop.catz._
 
-import java.time.format.DateTimeFormatter
-
-
 /*
  * utilitary base object that provides a query
  */
@@ -24,21 +21,13 @@ object BasePure {
 }
 
 object TestPureApp {
-  //log
-  def log(msg: String) = {
-    for {
-      t <- ZIO.accessM[zio.clock.Clock](_.get.localDateTime).map(_.format(DateTimeFormatter.ISO_DATE_TIME))
-      _ <- ZIO.accessM[Blocking](_.get.effectBlocking(println(s"[${t}] ${msg}")))
-    } yield ()
-  }
-
   val prog = (xa: Transactor[Task]) => for {
     concurrent <- ZIO.foreachParN(20)(List.range(0, 100)){ i =>
                     for {
                       r <- zio.random.nextInt
-                      _ <- log(s"${i}: starting")
+                      _ <- Log(s"${i}: starting")
                       _ <- BasePure.queryString(xa, sql"select nodeid from nodeconfigurations, pg_sleep(${r%5})")
-                      _ <- log(s"${i}: done")
+                      _ <- Log(s"${i}: done")
                     } yield i.toString
                   }
   } yield {
